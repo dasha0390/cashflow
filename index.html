@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashflow Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .chart-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        .allocation-section {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            color: white;
+        }
+        .allocation-section h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .allocation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .allocation-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        .allocation-card h4 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        .allocation-card .amount {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .allocation-card .percentage {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 12px;
+            color: #555;
+            font-weight: 600;
+        }
+        input, select, button {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        input[type="number"] {
+            width: 150px;
+        }
+        input[type="date"] {
+            width: 160px;
+        }
+        select {
+            width: 180px;
+            cursor: pointer;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 10px 25px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        .card-income {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .card-expense {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+        .card-balance {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .summary-card h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        .summary-card .amount {
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab:hover {
+            background: #f5f5f5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+        tr:hover {
+            background: #f9f9f9;
+        }
+        .income {
+            color: #11998e;
+            font-weight: 600;
+        }
+        .expense {
+            color: #eb3349;
+            font-weight: 600;
+        }
+        .delete-btn {
+            background: #eb3349;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background: #d32f2f;
+            transform: none;
+            box-shadow: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Cashflow Tracker</h1>
+        <p class="subtitle">Kelola keuangan mingguan dan bulanan Anda dengan mudah</p>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label>Tanggal</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="input-group">
+                <label>Tipe</label>
+                <select id="type">
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Kategori</label>
+                <select id="category">
+                    <option value="Gaji">Gaji</option>
+                    <option value="Bonus">Bonus</option>
+                    <option value="Investasi">Investasi</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+            <div class="input-group" id="priorityGroup" style="display: none;">
+                <label>Prioritas</label>
+                <select id="priority">
+                    <option value="need">Kebutuhan</option>
+                    <option value="want">Keinginan</option>
+                    <option value="saving">Tabungan/Investasi</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Jumlah (Rp)</label>
+                <input type="number" id="amount" placeholder="0" required>
+            </div>
+            <div class="input-group">
+                <label>Deskripsi</label>
+                <input type="text" id="description" placeholder="Catatan..." style="width: 200px;">
+            </div>
+            <button onclick="addTransaction()">+ Tambah Transaksi</button>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card card-income">
+                <h3>Total Pemasukan</h3>
+                <div class="amount" id="totalIncome">Rp 0</div>
+            </div>
+            <div class="summary-card card-expense">
+                <h3>Total Pengeluaran</h3>
+                <div class="amount" id="totalExpense">Rp 0</div>
+            </div>
+            <div class="summary-card card-balance">
+                <h3>Saldo</h3>
+                <div class="amount" id="balance">Rp 0</div>
+            </div>
+        </div>
+
+        <div class="allocation-section">
+            <h2>📊 Alokasi Pengeluaran Bulanan (Metode 50/30/20)</h2>
+            <div class="allocation-grid">
+                <div class="allocation-card">
+                    <h4>Kebutuhan (50%)</h4>
+                    <div class="amount" id="needsAmount">Rp 0</div>
+                    <div class="percentage" id="needsPercentage">0% dari pengeluaran</div>
+                </div>
+                <div class="allocation-card">
+                    <h4>Keinginan (30%)</h4>
+                    <div class="amount" id="wantsAmount">Rp 0</div>
+                    <div class="percentage" id="wantsPercentage">0% dari pengeluaran</div>
+                </div>
+                <div class="allocation-card">
+                    <h4>Tabungan/Investasi (20%)</h4>
+                    <div class="amount" id="savingsAmount">Rp 0</div>
+                    <div class="percentage" id="savingsPercentage">0% dari pengeluaran</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>📈 Trend Cashflow</h3>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>🥧 Distribusi Pengeluaran</h3>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>📊 Kebutuhan vs Keinginan vs Tabungan</h3>
+                <div class="chart-wrapper">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>💰 Perbandingan Pemasukan vs Pengeluaran</h3>
+                <div class="chart-wrapper">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-toggle">
+            <div class="input-group">
+                <label>Tampilan</label>
+                <select id="viewMode" onchange="updateView()">
+                    <option value="all">Semua Transaksi</option>
+                    <option value="weekly">Mingguan</option>
+                    <option value="monthly">Bulanan</option>
+                </select>
+            </div>
+            <div class="input-group" id="periodSelector" style="display: none;">
+                <label id="periodLabel">Pilih Periode</label>
+                <input type="month" id="monthPicker" onchange="updateView()">
+                <input type="week" id="weekPicker" onchange="updateView()" style="display: none;">
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('all')">Semua</button>
+            <button class="tab" onclick="switchTab('income')">Pemasukan</button>
+            <button class="tab" onclick="switchTab('expense')">Pengeluaran</button>
+        </div>
+
+        <div id="tableContainer"></div>
+    </div>
+
+    <script>
+        // ⚠️ GANTI URL INI DENGAN URL DEPLOYMENT APPS SCRIPT ANDA
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbs-5K25ZimK06lVO89nQA5oxKMkMXTcaMnQzH_WHUA6l0Akk80iu2kH410usZA6vr/exec';
+        
+        let transactions = [];
+        let currentFilter = 'all';
+        let charts = {};
+
+        // Definisi kategori untuk auto-classification
+        const categoryPriority = {
+            // Kebutuhan (needs)
+            'Makanan': 'need',
+            'Transportasi': 'need',
+            'Tagihan': 'need',
+            'Kesehatan': 'need',
+            'Sewa/KPR': 'need',
+            'Utilitas': 'need',
+            
+            // Keinginan (wants)
+            'Hiburan': 'want',
+            'Belanja': 'want',
+            'Makan di Luar': 'want',
+            'Hobi': 'want',
+            'Liburan': 'want',
+            
+            // Tabungan/Investasi (saving)
+            'Tabungan': 'saving',
+            'Investasi': 'saving',
+            'Dana Darurat': 'saving'
+        };
+
+        // Load data saat halaman dimuat
+        window.addEventListener('load', function() {
+            loadTransactionsFromSheet();
+        });
+
+        // Set tanggal hari ini sebagai default
+        document.getElementById('date').valueAsDate = new Date();
+        
+        // Set bulan ini sebagai default
+        const today = new Date();
+        document.getElementById('monthPicker').value = today.toISOString().slice(0, 7);
+
+        // Load transactions dari Google Sheets
+        async function loadTransactionsFromSheet() {
+            if (APPS_SCRIPT_URL === 'PASTE_URL_APPS_SCRIPT_ANDA_DISINI') {
+                console.warn('Please set your Apps Script URL');
+                updateView();
+                return;
+            }
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    transactions = result.data;
+                    updateView();
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                alert('Gagal memuat data dari Google Sheets. Pastikan URL Apps Script sudah benar.');
+            }
+        }
+
+        // Simpan transaksi ke Google Sheets
+        async function saveToSheet(transaction) {
+            if (APPS_SCRIPT_URL === 'PASTE_URL_APPS_SCRIPT_ANDA_DISINI') {
+                console.warn('Please set your Apps Script URL');
+                return;
+            }
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'add',
+                        ...transaction
+                    })
+                });
+                
+                console.log('Transaction saved to Google Sheets');
+            } catch (error) {
+                console.error('Error saving to sheet:', error);
+                alert('Gagal menyimpan ke Google Sheets. Data tetap tersimpan di browser.');
+            }
+        }
+
+        // Hapus transaksi dari Google Sheets
+        async function deleteFromSheet(id) {
+            if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzbs-5K25ZimK06lVO89nQA5oxKMkMXTcaMnQzH_WHUA6l0Akk80iu2kH410usZA6vr/exec') {
+                console.warn('Please set your Apps Script URL');
+                return;
+            }
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        id: id
+                    })
+                });
+                
+                console.log('Transaction deleted from Google Sheets');
+            } catch (error) {
+                console.error('Error deleting from sheet:', error);
+            }
+        }
+
+        // Update kategori dan prioritas berdasarkan tipe
+        document.getElementById('type').addEventListener('change', function() {
+            const category = document.getElementById('category');
+            const priorityGroup = document.getElementById('priorityGroup');
+            
+            if (this.value === 'income') {
+                priorityGroup.style.display = 'none';
+                category.innerHTML = `
+                    <option value="Gaji">Gaji</option>
+                    <option value="Bonus">Bonus</option>
+                    <option value="Investasi">Investasi</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Lainnya">Lainnya</option>
+                `;
+            } else {
+                priorityGroup.style.display = 'flex';
+                category.innerHTML = `
+                    <optgroup label="Kebutuhan">
+                        <option value="Makanan" data-priority="need">Makanan</option>
+                        <option value="Transportasi" data-priority="need">Transportasi</option>
+                        <option value="Tagihan" data-priority="need">Tagihan</option>
+                        <option value="Kesehatan" data-priority="need">Kesehatan</option>
+                        <option value="Sewa/KPR" data-priority="need">Sewa/KPR</option>
+                        <option value="Utilitas" data-priority="need">Utilitas (Listrik, Air, Internet)</option>
+                    </optgroup>
+                    <optgroup label="Keinginan">
+                        <option value="Hiburan" data-priority="want">Hiburan</option>
+                        <option value="Belanja" data-priority="want">Belanja</option>
+                        <option value="Makan di Luar" data-priority="want">Makan di Luar</option>
+                        <option value="Hobi" data-priority="want">Hobi</option>
+                        <option value="Liburan" data-priority="want">Liburan</option>
+                    </optgroup>
+                    <optgroup label="Tabungan/Investasi">
+                        <option value="Tabungan" data-priority="saving">Tabungan</option>
+                        <option value="Investasi" data-priority="saving">Investasi</option>
+                        <option value="Dana Darurat" data-priority="saving">Dana Darurat</option>
+                    </optgroup>
+                    <option value="Lainnya">Lainnya</option>
+                `;
+                updatePriorityFromCategory();
+            }
+        });
+
+        // Auto-update priority saat kategori berubah
+        document.getElementById('category').addEventListener('change', updatePriorityFromCategory);
+
+        function updatePriorityFromCategory() {
+            const category = document.getElementById('category').value;
+            const priority = document.getElementById('priority');
+            
+            if (categoryPriority[category]) {
+                priority.value = categoryPriority[category];
+            }
+        }
+
+        function addTransaction() {
+            const date = document.getElementById('date').value;
+            const type = document.getElementById('type').value;
+            const category = document.getElementById('category').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            let priority = null;
+
+            if (!date || !amount || isNaN(amount)) {
+                alert('Mohon isi tanggal dan jumlah dengan benar!');
+                return;
+            }
+
+            // Set priority untuk pengeluaran
+            if (type === 'expense') {
+                const priorityElement = document.getElementById('priority');
+                priority = priorityElement.value;
+                
+                // Jika priority kosong, ambil dari kategori
+                if (!priority && categoryPriority[category]) {
+                    priority = categoryPriority[category];
+                }
+            }
+
+            const transaction = {
+                id: Date.now(),
+                date,
+                type,
+                category,
+                amount,
+                description,
+                priority
+            };
+
+            transactions.push(transaction);
+            
+            // Simpan ke Google Sheets
+            saveToSheet(transaction);
+
+            // Reset form
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            
+            updateView();
+        }
+
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            
+            // Hapus dari Google Sheets
+            deleteFromSheet(id);
+            
+            updateView();
+        }
+
+        function switchTab(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            updateView();
+        }
+
+        function updateView() {
+            const viewMode = document.getElementById('viewMode').value;
+            const periodSelector = document.getElementById('periodSelector');
+            const monthPicker = document.getElementById('monthPicker');
+            const weekPicker = document.getElementById('weekPicker');
+            const periodLabel = document.getElementById('periodLabel');
+
+            // Show/hide period selector
+            if (viewMode === 'monthly') {
+                periodSelector.style.display = 'flex';
+                monthPicker.style.display = 'block';
+                weekPicker.style.display = 'none';
+                periodLabel.textContent = 'Pilih Bulan';
+            } else if (viewMode === 'weekly') {
+                periodSelector.style.display = 'flex';
+                monthPicker.style.display = 'none';
+                weekPicker.style.display = 'block';
+                periodLabel.textContent = 'Pilih Minggu';
+            } else {
+                periodSelector.style.display = 'none';
+            }
+
+            renderTransactions();
+            updateSummary();
+            updateAllocation();
+            updateCharts();
+        }
+
+        function getFilteredTransactions() {
+            const viewMode = document.getElementById('viewMode').value;
+            let filtered = [...transactions];
+
+            if (viewMode === 'monthly') {
+                const selectedMonth = document.getElementById('monthPicker').value;
+                if (selectedMonth) {
+                    filtered = filtered.filter(t => t.date.startsWith(selectedMonth));
+                }
+            } else if (viewMode === 'weekly') {
+                const selectedWeek = document.getElementById('weekPicker').value;
+                if (selectedWeek) {
+                    const [year, week] = selectedWeek.split('-W');
+                    filtered = filtered.filter(t => {
+                        const date = new Date(t.date);
+                        const weekNum = getWeekNumber(date);
+                        return date.getFullYear() === parseInt(year) && weekNum === parseInt(week);
+                    });
+                }
+            }
+
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(t => t.type === currentFilter);
+            }
+
+            return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function updateAllocation() {
+            const filtered = getFilteredTransactions();
+            const expenses = filtered.filter(t => t.type === 'expense');
+            
+            const needs = expenses.filter(t => t.priority === 'need').reduce((sum, t) => sum + t.amount, 0);
+            const wants = expenses.filter(t => t.priority === 'want').reduce((sum, t) => sum + t.amount, 0);
+            const savings = expenses.filter(t => t.priority === 'saving').reduce((sum, t) => sum + t.amount, 0);
+            
+            const totalExpense = needs + wants + savings;
+
+            document.getElementById('needsAmount').textContent = formatRupiah(needs);
+            document.getElementById('wantsAmount').textContent = formatRupiah(wants);
+            document.getElementById('savingsAmount').textContent = formatRupiah(savings);
+
+            if (totalExpense > 0) {
+                document.getElementById('needsPercentage').textContent = 
+                    `${((needs / totalExpense) * 100).toFixed(1)}% dari pengeluaran (ideal: 50%)`;
+                document.getElementById('wantsPercentage').textContent = 
+                    `${((wants / totalExpense) * 100).toFixed(1)}% dari pengeluaran (ideal: 30%)`;
+                document.getElementById('savingsPercentage').textContent = 
+                    `${((savings / totalExpense) * 100).toFixed(1)}% dari pengeluaran (ideal: 20%)`;
+            } else {
+                document.getElementById('needsPercentage').textContent = '0% dari pengeluaran (ideal: 50%)';
+                document.getElementById('wantsPercentage').textContent = '0% dari pengeluaran (ideal: 30%)';
+                document.getElementById('savingsPercentage').textContent = '0% dari pengeluaran (ideal: 20%)';
+            }
+        }
+
+        function updateCharts() {
+            updateTrendChart();
+            updateCategoryChart();
+            updatePriorityChart();
+            updateComparisonChart();
+        }
+
+        function updateTrendChart() {
+            const filtered = getFilteredTransactions();
+            const dateMap = {};
+            
+            filtered.forEach(t => {
+                if (!dateMap[t.date]) {
+                    dateMap[t.date] = { income: 0, expense: 0 };
+                }
+                if (t.type === 'income') {
+                    dateMap[t.date].income += t.amount;
+                } else {
+                    dateMap[t.date].expense += t.amount;
+                }
+            });
+
+            const dates = Object.keys(dateMap).sort();
+            const incomeData = dates.map(d => dateMap[d].income);
+            const expenseData = dates.map(d => dateMap[d].expense);
+
+            if (charts.trend) charts.trend.destroy();
+            
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates.map(d => new Date(d).toLocaleDateString('id-ID', {day: '2-digit', month: 'short'})),
+                    datasets: [{
+                        label: 'Pemasukan',
+                        data: incomeData,
+                        borderColor: '#11998e',
+                        backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Pengeluaran',
+                        data: expenseData,
+                        borderColor: '#eb3349',
+                        backgroundColor: 'rgba(235, 51, 73, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryChart() {
+            const filtered = getFilteredTransactions().filter(t => t.type === 'expense');
+            const categoryMap = {};
+            
+            filtered.forEach(t => {
+                categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
+            });
+
+            const categories = Object.keys(categoryMap);
+            const amounts = Object.values(categoryMap);
+
+            if (charts.category) charts.category.destroy();
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            charts.category = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                            '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePriorityChart() {
+            const filtered = getFilteredTransactions().filter(t => t.type === 'expense');
+            
+            const needs = filtered.filter(t => t.priority === 'need').reduce((sum, t) => sum + t.amount, 0);
+            const wants = filtered.filter(t => t.priority === 'want').reduce((sum, t) => sum + t.amount, 0);
+            const savings = filtered.filter(t => t.priority === 'saving').reduce((sum, t) => sum + t.amount, 0);
+
+            if (charts.priority) charts.priority.destroy();
+            
+            const ctx = document.getElementById('priorityChart').getContext('2d');
+            charts.priority = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Kebutuhan (50%)', 'Keinginan (30%)', 'Tabungan (20%)'],
+                    datasets: [{
+                        label: 'Pengeluaran Aktual',
+                        data: [needs, wants, savings],
+                        backgroundColor: ['#11998e', '#f5576c', '#4facfe']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateComparisonChart() {
+            const filtered = getFilteredTransactions();
+            const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expense = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+            if (charts.comparison) charts.comparison.destroy();
+            
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            charts.comparison = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total'],
+                    datasets: [{
+                        label: 'Pemasukan',
+                        data: [income],
+                        backgroundColor: '#11998e'
+                    }, {
+                        label: 'Pengeluaran',
+                        data: [expense],
+                        backgroundColor: '#eb3349'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTransactions() {
+            const container = document.getElementById('tableContainer');
+            const filtered = getFilteredTransactions();
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>Belum ada transaksi. Mulai tambahkan transaksi Anda!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Kategori</th>
+                            <th>Prioritas</th>
+                            <th>Deskripsi</th>
+                            <th>Pemasukan</th>
+                            <th>Pengeluaran</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(t => `
+                            <tr>
+                                <td>${new Date(t.date).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'})}</td>
+                                <td>${t.category}</td>
+                                <td>${t.priority ? getPriorityLabel(t.priority) : '-'}</td>
+                                <td>${t.description || '-'}</td>
+                                <td class="income">${t.type === 'income' ? formatRupiah(t.amount) : '-'}</td>
+                                <td class="expense">${t.type === 'expense' ? formatRupiah(t.amount) : '-'}</td>
+                                <td><button class="delete-btn" onclick="deleteTransaction(${t.id})">Hapus</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        function getPriorityLabel(priority) {
+            const labels = {
+                'need': '🔴 Kebutuhan',
+                'want': '🟡 Keinginan',
+                'saving': '🟢 Tabungan'
+            };
+            return labels[priority] || '-';
+        }
+
+        function updateSummary() {
+            const filtered = getFilteredTransactions();
+            const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expense = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const balance = income - expense;
+
+            document.getElementById('totalIncome').textContent = formatRupiah(income);
+            document.getElementById('totalExpense').textContent = formatRupiah(expense);
+            document.getElementById('balance').textContent = formatRupiah(balance);
+        }
+
+        function formatRupiah(amount) {
+            return 'Rp ' + amount.toLocaleString('id-ID');
+        }
+
+        // Initialize
+        updateView();
+    </script>
+</body>
+</html>
